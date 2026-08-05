@@ -55,6 +55,9 @@ class ReflectionAgent:
         if request.get('travel_dates'):
             summary_sections.append(f"Travel dates are set to {request['travel_dates']}. Consider local weather and visa timing.")
             score += 5
+        elif request.get('travel_month'):
+            summary_sections.append(f"Travel month is {request['travel_month']}, so seasonal activities and packing are likely relevant.")
+            score += 3
         else:
             summary_sections.append('No precise travel dates were provided; keep flexibility in mind.')
             score -= 2
@@ -74,6 +77,10 @@ class ReflectionAgent:
             if total_cost <= requested_budget * 0.75:
                 summary_sections.append('The plan is conservative and leaves room for upgrades or extra experiences.')
                 score += 5
+
+        if request.get('interests'):
+            summary_sections.append(f"Itinerary aligns with your interests in {', '.join(request['interests'])}.")
+            score += 2
 
         validation = (
             'Travel plan validated for destination, itinerary, budget alignment, visa, and weather guidance.'
