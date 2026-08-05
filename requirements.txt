@@ -1,0 +1,7 @@
+streamlit
+pydantic
+langchain
+ollama
+langchain-community
+langchain-ollama
+langgraph
