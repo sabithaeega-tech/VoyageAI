@@ -42,18 +42,8 @@ if st.button('Generate Travel Plan'):
             'travel_dates': travel_dates or None,
         }
 
-        result = supervisor.handle_request(user_input, user_profile)
-
-        st.success('Travel plan generated successfully.')
-
-        st.subheader('📍 Destination Recommendation')
-        for item in result['destination_recommendations'][:3]:
-            st.markdown(f"### {item['name']} ⭐ Recommended")
-            st.markdown(f"**Reason:** {item.get('reason', 'Recommended based on your request.')}\n\n")
-            st.markdown(f"**Weather:** {item.get('weather')}\n\n**Best Months:** {item.get('best_months')}\n\n**Visa:** {item.get('visa')}")
-            st.markdown(f"**Tags:** {', '.join(item.get('tags', []))}")
-            st.markdown(f"**Top attractions:** {', '.join(item.get('attractions', [])[:4])}")
-            st.write('---')
+        with st.spinner('Generating your travel plan. This may take a moment depending on the model and network speed...'):
+            result = supervisor.handle_request(user_input, user_profile)
 
         st.subheader('🗓 Itinerary')
         for stop in result.get('itinerary', []):
@@ -70,15 +60,41 @@ if st.button('Generate Travel Plan'):
         st.markdown(f"**Total estimated cost:** {total_cost} {budget_currency}")
         st.markdown(f"**Budget requested:** {budget_data.get('budget_requested', budget)} {budget_currency}")
         st.markdown(f"**Remaining / overrun:** {budget_data.get('budget_difference', 'N/A')} {budget_currency}")
+        if budget_data.get('daily_budget') is not None:
+            st.markdown(f"**Estimated daily budget:** {budget_data['daily_budget']} {budget_currency}")
+        if budget_data.get('per_traveler_total') is not None:
+            st.markdown(f"**Cost per traveler:** {budget_data['per_traveler_total']} {budget_currency}")
+        if budget_data.get('flight_per_traveler') is not None:
+            st.markdown(f"**Estimated flight cost per traveler:** {budget_data['flight_per_traveler']} {budget_currency}")
+
         st.markdown('**Breakdown:**')
         breakdown = budget_data.get('breakdown', {})
+        if budget_data.get('flight_route'):
+            st.markdown('**Estimated Flight**')
+            st.write(f"{budget_data.get('flight_route')}")
+            st.write(f"{budget_data.get('flight_type', 'Round Trip')}")
+            st.write(f"{budget_data.get('flight_total', breakdown.get('flights', 'N/A')):,} {budget_currency} (estimated)")
+        else:
+            st.write(f"Flights: {breakdown.get('flights', 'N/A')} {budget_currency}")
+
+        st.markdown('**Recommended Hotels**')
+        hotel_suggestions = budget_data.get('hotel_suggestions', [])
+        for hotel in hotel_suggestions:
+            st.markdown(f"- {hotel}")
+
+        st.markdown('**Activity suggestions**')
+        activity_suggestions = budget_data.get('activity_suggestions', [])
+        for activity in activity_suggestions:
+            st.markdown(f"- {activity}")
+
         st.write(f"Accommodation: {breakdown.get('accommodation', 'N/A')} {budget_currency}")
-        st.write(f"Flights: {breakdown.get('flights', 'N/A')} {budget_currency}")
         st.write(f"Food: {breakdown.get('food', 'N/A')} {budget_currency}")
         st.write(f"Transport: {breakdown.get('transport', 'N/A')} {budget_currency}")
         st.write(f"Activities: {breakdown.get('activities', 'N/A')} {budget_currency}")
         st.write(f"Shopping: {breakdown.get('shopping', 'N/A')} {budget_currency}")
         st.write(f"Contingency: {breakdown.get('contingency', 'N/A')} {budget_currency}")
+        if budget_data.get('budget_difference') is not None and budget_data['budget_difference'] < 0:
+            st.warning('Your budget appears to be lower than the estimated total cost. Consider a more budget-friendly destination or accommodation style.')
         if budget_data.get('budget_friendly_advice'):
             st.info(budget_data['budget_friendly_advice'])
 
