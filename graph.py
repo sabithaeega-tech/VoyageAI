@@ -88,10 +88,6 @@ class TravelPlannerGraph:
             budget=request.get('budget', 0),
             currency=request.get('currency', 'USD'),
             travel_dates=request.get('travel_dates'),
-            travel_month=request.get('travel_month'),
-            travelers=request.get('travelers', 1),
-            accommodation_style=request.get('accommodation_style', 'moderate'),
-            nationality=request.get('nationality', ''),
         )
         return {'itinerary': itinerary}
 
