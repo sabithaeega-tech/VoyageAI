@@ -118,6 +118,91 @@ Tests focus on itinerary parsing, tools behavior, and basic provider fallbacks.
 
 ---
 
+## Configuration & Environment Variables
+
+Configure the app by setting the following environment variables (or export in your shell / CI environment):
+
+- `OLLAMA_HOST` — URL to your Ollama server (default `http://localhost:11434`).
+- `OLLAMA_MODEL` — model identifier to use (default `llama3.2:latest` or as configured by your Ollama instance).
+- `OLLAMA_TEMPERATURE` — sampling temperature for LLM responses (default `0.2`).
+- `STREAMLIT_SERVER_PORT` — optionally override the Streamlit port.
+
+Examples (Windows PowerShell):
+
+```powershell
+$env:OLLAMA_HOST = 'http://localhost:11434'
+$env:OLLAMA_MODEL = 'llama3.2:latest'
+$env:OLLAMA_TEMPERATURE = '0.2'
+streamlit run app.py
+```
+
+## Architecture & Data Flow
+
+High level dataflow (user -> planning graph -> agents -> providers/tools -> UI):
+
+```mermaid
+flowchart LR
+  User[User UI (Streamlit)] -->|prompt| App[app.py]
+  App --> Supervisor[SupervisorAgent]
+  Supervisor --> Graph[TravelPlannerGraph]
+  Graph --> DA[Destination Agent]
+  Graph --> IA[Itinerary Agent]
+  Graph --> BA[Budget/Booking Agent]
+  Graph --> TA[Travel Assistance Agent]
+  Graph --> RA[Reflection Agent]
+  IA --> Providers[Providers / Tools]
+  BA --> Tools[Budget / Currency / Destination DB]
+  Providers -->|LLM calls| Ollama[Ollama]
+  Tools -->|local lookups| DestinationDB[tools.destination_search]
+  Graph --> App
+```
+
+Each agent receives structured inputs (destination, interests, duration, budget, traveler profile) and returns structured outputs consumed by the next stage.
+
+## Agents (detailed)
+
+- `DestinationAgent`: identifies or builds a canonical destination object (name, region, tags, attractions, avg_daily_cost, visa info). Inputs: free-text hint, interests, budget, duration. Output: destination dict.
+- `ItineraryAgent`: builds a JSON array of days (day, highlights, morning, afternoon, evening, places_to_visit, stay). It first tries the LLM provider and falls back to a local generator when unavailable.
+- `BudgetBookingAgent`: estimates cost breakdowns and hotel suggestions using `tools/budget_calculator.py` and `tools/currency_converter.py`.
+- `TravelAssistanceAgent`: collects visa guidance, weather forecasts, packing checklists, and local transport advice via `tools/` helpers and external APIs (when integrated).
+- `ReflectionAgent`: performs a quick validation and confidence scoring on the assembled plan.
+
+## Providers & Tools
+
+- `providers/ollama_provider.py` adapts local Ollama or LangChain-compatible LLMs. If Ollama is unreachable, the provider returns a structured fallback string that the itinerary parser interprets conservatively.
+- `tools/` contains small, pure-Python helpers that are easy to extend and test:
+  - `destination_search.py` — local destination DB for quick matches; add entries here to improve local suggestions.
+  - `visa_lookup.py` — simple visa rules mapping.
+  - `currency_converter.py` — wrapper around exchange rates (stub or live API).
+  - `budget_calculator.py` — simple budget estimator logic.
+  - `weather_service.py` — basic weather lookup or stub for local testing.
+
+## Deployment & Production Notes
+
+- Run Ollama (or another LLM service) as a separate, secured service. Keep model hosts and credentials out of source control.
+- Consider containerizing the app and Ollama model server for reproducible deployments. Add health checks and logging for production readiness.
+- For high-volume use, add request throttling, caching for destination lookups, and rate-limited LLM call queuing.
+
+## Troubleshooting
+
+- LLM backend unavailable: The app will fall back to a local structured planner; install and run Ollama to get richer named attractions and narrative.
+- Generic place names in itineraries: Add destination entries to `tools/destination_search.py` (name and `attractions`) so the itinerary agent can reference concrete POIs.
+- Placeholder or invisible input text: If the UI shows low-contrast placeholders, update the CSS in `app.py` (we already apply a fix to make textarea background and placeholder readable).
+
+## Contributing Checklist
+
+- Open an issue describing the change or bug.
+- Create a feature branch and include tests for new behavior when applicable.
+- Keep changes focused and update `README.md` when adding new configuration or runtime behavior.
+
+## Known Limitations
+
+- Local destination DB is limited to a few examples — consider integrating a places API (Google Places, OpenTripMap) for broader coverage.
+- The LLM prompt/response parsing expects valid JSON; malformed LLM output may be ignored by the parser and trigger fallbacks.
+- No persistence layer: conversation memory is ephemeral (session-based). Add a database if you need cross-session user history.
+
+---
+
 
 ## Screen shots 
 <img width="1913" height="930" alt="Screenshot 2026-08-06 130718" src="https://github.com/user-attachments/assets/7bec57db-64c5-4706-8c2b-335c775a9ae5" />
