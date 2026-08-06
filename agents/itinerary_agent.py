@@ -1,8 +1,58 @@
 import json
 import re
+import ast
 from typing import Any, Dict, List, Optional
 
 from providers.ollama_provider import OllamaProvider
+
+
+def _clean_highlight(text: str) -> str:
+    text = text.strip()
+    # If the text is wrapped in outer quotes, strip them
+    if (text.startswith("'") and text.endswith("'")) or (text.startswith('"') and text.endswith('"')):
+        text = text[1:-1].strip()
+
+    # If it looks like a dict, try parsing it
+    if (text.startswith('{') and text.endswith('}')):
+        try:
+            obj = ast.literal_eval(text)
+            if isinstance(obj, dict):
+                parts = []
+                for k in ['time', 'activity', 'title', 'details', 'description', 'note']:
+                    if k in obj and obj[k]:
+                        parts.append(str(obj[k]))
+                if not parts:
+                    parts = [str(v) for v in obj.values() if v]
+                if parts:
+                    return " - ".join(parts)
+        except Exception:
+            pass
+
+    # Clean double escaped structures
+    if text.startswith('u{') or text.startswith('"{') or text.startswith("'{"):
+        try:
+            # strip outer layer
+            inner = text
+            if inner.startswith('u'):
+                inner = inner[1:]
+            if (inner.startswith("'") and inner.endswith("'")) or (inner.startswith('"') and inner.endswith('"')):
+                inner = inner[1:-1]
+            obj = ast.literal_eval(inner)
+            if isinstance(obj, dict):
+                parts = []
+                for k in ['time', 'activity', 'title', 'details', 'description', 'note']:
+                    if k in obj and obj[k]:
+                        parts.append(str(obj[k]))
+                if not parts:
+                    parts = [str(v) for v in obj.values() if v]
+                if parts:
+                    return " - ".join(parts)
+        except Exception:
+            pass
+
+    if text.startswith('- '):
+        text = text[2:].strip()
+    return text
 
 
 class ItineraryPlannerAgent:
@@ -120,8 +170,11 @@ class ItineraryPlannerAgent:
         nationality_text = nationality or 'a traveler'
 
         return (
-            'You are VoyageAI, a travel itinerary planner. Build a highly personalized, month-aware day-by-day itinerary for the user. '
+            'You are VoyageAI, an advanced travel itinerary planner. Build a highly personalized, month-aware day-by-day itinerary for the user. '
             'Return only valid JSON as an array of objects with keys: day and highlights. '
+            'Each object in the JSON array represents a day (e.g., "Day 1", "Day 2"). '
+            'The "highlights" key must be an array of simple, plain-text strings. '
+            'Each highlight MUST be a plain string (e.g., "Arrive at hotel and unpack", "Visit the Eiffel Tower"), NOT a JSON object, dictionary, or sub-keys. '
             'Each day should include 4 to 6 action-oriented highlights such as arrival logistics, hotel suggestions, morning/afternoon/evening activities, meals, local experiences, and transport notes. '
             'If a travel month is provided, include a dedicated seasonal section such as "November Highlights" or "Spring highlights" that describes month-specific weather, festivals, events, foliage, markets, or local traditions. '
             'Include at least one recommendation for accommodation or hotel style, one type of local cuisine, and one activity tailored to the travel month and destination. '
@@ -181,7 +234,9 @@ class ItineraryPlannerAgent:
             highlights = item.get('highlights') or []
             if isinstance(highlights, str):
                 highlights = [highlights]
-            highlights_list = [str(entry).strip() for entry in highlights if str(entry).strip()]
+
+            # Clean each highlight entry
+            highlights_list = [_clean_highlight(entry) for entry in highlights if str(entry).strip()]
             parsed.append({'day': day_label, 'highlights': highlights_list})
 
         if len(parsed) < duration:

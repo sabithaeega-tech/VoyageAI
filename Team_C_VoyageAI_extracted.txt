@@ -1,0 +1,403 @@
+
+--- PAGE 1 ---
+TEAM C - PAGE 1
+VoyageAI
+Intelligent Multi-Agent Travel Planning & Assistance Platform
+Client Information
+Client: GlobeTrek Travel Solutions Pvt. Ltd.
+Industry: Travel & Tourism Technology
+Project Type: Enterprise Agentic AI Capstone
+Duration: 2 Days
+Team Size: 4 Students
+Difficulty: Advanced
+Project Overview
+GlobeTrek Travel Solutions aims to build VoyageAI, an enterprise-grade multi-agent travel assistant that
+simplifies end-to-end trip planning. The platform should help users discover destinations, generate
+personalized itineraries, estimate travel budgets, provide visa and travel guidance, and answer travel-related
+questions through natural language conversations.
+
+Unlike traditional travel portals, VoyageAI will employ a Supervisor Agent powered by LangGraph to
+coordinate multiple specialized AI agents. The system should maintain conversation memory, perform
+intelligent tool selection, and use reflection to validate recommendations before presenting a complete travel
+plan.
+Technology Stack
+• Python 3.11+
+• LangChain
+• LangGraph
+• OpenAI / Gemini / Ollama (Llama 3.2)
+• Streamlit
+• Pydantic
+• Pandas
+• Memory
+• Reflection
+• Tool Calling
+• Git & GitHub
+Learning Outcomes
+• Design enterprise-grade Agentic AI applications.
+• Build Supervisor-based multi-agent systems using LangGraph.
+• Develop AI agents for destination planning, budgeting, and travel assistance.
+• Implement shared memory for context-aware travel planning.
+• Apply reflection to improve AI-generated recommendations.
+• Create modular Streamlit applications with production-ready architecture.
+--- PAGE 2 ---
+Table of Contents
+• Page 1 – Introduction
+• Page 2 – Business Background & Challenges
+• Page 3 – Project Scope & Functional Requirements
+• Page 4 – Multi-Agent Architecture
+• Page 5 – Technical Design & Implementation
+• Page 6 – Deliverables & Evaluation
+
+
+Business Background & Problem Statement
+1. Business Background
+About the Client
+GlobeTrek Travel Solutions Pvt. Ltd. is a fast-growing travel technology company that provides digital travel
+planning solutions for individual travelers, families, and corporate clients. The organization offers services
+such as destination discovery, flight and hotel booking, itinerary planning, travel budgeting, visa assistance,
+and travel support.
+
+As customer expectations continue to evolve, travelers increasingly expect personalized, instant, and intelligent
+travel recommendations. GlobeTrek plans to develop VoyageAI, an Agentic AI-powered travel assistant capable
+of coordinating multiple specialized AI agents to provide a seamless end-to-end travel planning experience.
+Current Business Environment
+• Destination Discovery Portal
+• Flight Booking Platform
+• Hotel Reservation System
+• Travel Itinerary Planner
+• Travel Budget Calculator
+• Visa Information Portal
+• Customer Support Helpdesk
+Although these systems provide valuable services, customers are required to switch between multiple
+applications to complete a single travel plan. This fragmented experience often leads to inconsistent
+recommendations, increased planning time, and reduced customer satisfaction.
+Existing Technology Landscape
+Existing System Purpose
+Destination Search Platform Discover travel destinations
+Flight Booking System Search and reserve flights
+Hotel Reservation Portal Book accommodations
+Travel Budget Calculator Estimate travel expenses
+Visa Information Portal Provide visa requirements
+Travel Helpdesk Handle customer enquiries
+Notification Service Travel reminders and alerts
+--- PAGE 3 ---
+Current Business Challenges
+Customer Challenges
+• Planning a complete trip requires multiple websites and applications.
+• Difficulty estimating overall travel costs.
+• Limited personalization in itinerary recommendations.
+• Confusion regarding visa requirements and travel documentation.
+• Time-consuming comparison of destinations, hotels, and transportation.
+Business Challenges
+• Customer support teams handle repetitive travel planning queries.
+• Travel information is distributed across multiple systems.
+• Manual itinerary creation requires significant effort.
+• Difficulty providing personalized travel recommendations at scale.
+• Increasing customer demand without proportional staffing.
+Executive Goals
+• Deliver personalized end-to-end travel planning.
+• Reduce customer effort through a unified AI assistant.
+• Automate routine travel enquiries using specialized AI agents.
+• Provide context-aware recommendations using conversation memory.
+• Improve customer satisfaction through explainable AI responses.
+Why Agentic AI?
+Traditional travel chatbots answer isolated questions but cannot coordinate multiple planning tasks such as
+destination selection, itinerary generation, budget estimation, and travel guidance. VoyageAI adopts a
+Supervisor-based Agentic AI architecture where specialized AI agents collaborate using LangGraph, share
+context through memory, invoke appropriate tools, and validate recommendations using a reflection stage
+before presenting a complete travel plan.
+
+Project Scope, Objectives & Functional Requirements
+3. Project Objective
+Project Vision
+GlobeTrek Travel Solutions aims to develop VoyageAI, an enterprise-grade multi-agent travel assistant that
+simplifies end-to-end travel planning. The platform should understand traveler preferences, coordinate
+specialized AI agents, maintain conversation context, and generate personalized travel plans covering
+destinations, itineraries, budgets, and travel guidance. The solution should demonstrate Agentic AI principles
+using LangChain, LangGraph, Memory, Reflection, and Tool Calling.
+--- PAGE 4 ---
+4. Project Scope
+Students must design and implement a Supervisor-based Multi-Agent AI system that assists users in planning
+complete domestic and international trips. The system should coordinate travel planning activities through
+multiple specialized agents while providing a seamless conversational experience.
+In Scope
+• Recommend destinations based on user preferences.
+• Generate optimized travel itineraries.
+• Estimate travel budgets and suggest cost-saving options.
+• Provide visa, weather, and travel guidance.
+• Maintain conversation history using memory.
+• Support natural language interaction through Streamlit.
+• Generate personalized travel plans.
+Out of Scope
+• Real-time flight or hotel booking.
+• Payment processing.
+• Live airline or hotel API integration.
+• Travel insurance claims.
+• Passport application processing.
+• Real-time GPS navigation.
+5. Functional Requirements
+Requirement ID Description
+FR-01 Recommend suitable travel destinations.
+FR-02 Generate personalized itineraries.
+FR-03 Estimate overall travel budget.
+FR-04 Provide visa and travel guidance.
+FR-05 Suggest accommodation and transportation options.
+FR-06 Route requests to the appropriate AI agents.
+FR-07 Maintain conversation memory.
+FR-08 Validate responses using reflection.
+FR-09 Display recommendations through Streamlit.
+FR-10 Support multiple travel planning scenarios.
+6. Business Rules
+• Recommendations should consider user budget, duration, interests, and travel season.
+• Travel advice should clearly distinguish recommendations from confirmed bookings.
+• Visa guidance should be informational only and encourage users to verify official requirements.
+• Conversation context should be maintained using memory.
+• The Reflection Node must validate completeness and consistency before returning the final plan.
+7. User Stories
+User Story 1: As a traveler, I want destination recommendations based on my interests and budget.
+User Story 2: As a traveler, I want a complete itinerary for my trip.
+--- PAGE 5 ---
+User Story 3: As a traveler, I want an estimated travel budget before booking.
+User Story 4: As a traveler, I want visa and travel guidance for my destination.
+User Story 5: As a returning user, I want the assistant to remember my travel preferences.
+8. Success Criteria
+• Natural language interaction for travel planning.
+• Successful routing through the Supervisor Agent.
+• Effective collaboration among all four AI agents.
+• Context-aware recommendations using shared memory.
+• Reflection improves the quality of travel plans.
+• Production-ready modular Streamlit application.
+
+
+Multi-Agent Architecture & System Design
+9. AI Solution Architecture
+VoyageAI follows a Supervisor-based Multi-Agent Architecture implemented using LangGraph. Every travel
+request is first received by the Supervisor Agent, which analyzes the travel intent, identifies the required
+planning activities, invokes one or more specialized travel agents, combines their outputs, validates the
+complete travel plan through a Reflection Node, and returns a personalized recommendation to the traveler.
+High-Level Workflow
+Traveler
+   |
+Streamlit User Interface
+   |
+Supervisor Agent (LangGraph)
+   |------ Destination Recommendation Agent
+   |------ Itinerary Planning Agent
+   |------ Budget & Booking Advisor Agent
+   |------ Travel Assistance Agent
+   |
+Shared Conversation Memory
+   |
+Reflection Node
+   |
+Final Travel Plan
+10. AI Agent Responsibilities
+Agent Primary
+Responsibility
+Inputs Outputs Suggested Tools
+Supervisor Agent Intent detection &
+workflow
+orchestration
+Traveler request Execution plan LangGraph
+--- PAGE 6 ---
+Destination Agent Recommend
+destinations &
+attractions
+Budget, interests Destination
+suggestions
+Destination
+Database
+Itinerary Agent Generate day-wise
+travel plan
+Destination,
+duration
+Travel itinerary Itinerary Planner
+Budget & Booking
+Agent
+Estimate costs &
+recommend
+options
+Budget, travelers Budget breakdown Budget Calculator
+Travel Assistance
+Agent
+Visa, weather &
+travel guidance
+Destination Travel advisory Visa/Weather
+Database
+11. Memory Strategy
+• Maintain traveler preferences across the conversation.
+• Remember previous destinations, budgets, and travel dates.
+• Reuse earlier recommendations to avoid repetitive questions.
+• Share travel context among all specialized agents using LangGraph state.
+12. Reflection Strategy
+Before presenting the final itinerary, the Reflection Node evaluates the combined recommendations generated
+by all participating agents.
+• Verify that the itinerary aligns with the user's travel duration and budget.
+• Check that all requested travel activities have been addressed.
+• Ensure recommendations are logically ordered and complete.
+• Improve clarity, consistency, and personalization of the final travel plan.
+13. Tool Calling Strategy
+Tool Purpose
+Destination Database Retrieve destination information
+Budget Calculator Estimate travel expenses
+Currency Converter Convert travel costs
+Visa Information Service Provide visa guidance
+Weather Information Service Display expected weather conditions
+Conversation Memory Maintain traveler context
+LLM Reasoning and response generation
+14. Example Execution Flow
+1. The traveler asks: 'Plan a 7-day trip to Japan in November with a budget of ₹2,00,000.'
+2. The Supervisor Agent determines that all four specialized agents are required.
+3. The Destination Recommendation Agent suggests suitable cities and attractions.
+4. The Budget & Booking Advisor estimates travel costs and recommends cost-effective options.
+5. The Itinerary Planning Agent generates a day-wise travel schedule.
+6. The Travel Assistance Agent provides visa guidance, weather expectations, and packing tips.
+7. Conversation Memory stores traveler preferences for future interactions.
+8. The Reflection Node validates the complete travel plan before returning the final response.
+
+--- PAGE 7 ---
+
+Implementation Roadmap, Technical Guidelines & Project Organization
+15. Technical Requirements
+Category Required Technology
+Programming Language Python 3.11+
+Framework LangChain
+Workflow Engine LangGraph
+LLM OpenAI / Gemini / Ollama (Llama 3.2)
+Frontend Streamlit
+Validation Pydantic
+Data Processing Pandas
+Visualization Matplotlib
+Version Control Git & GitHub
+Optional Storage SQLite / ChromaDB
+16. Recommended Project Folder Structure
+voyageai/
+│
+├── app.py
+├── supervisor.py
+├── graph.py
+├── requirements.txt
+├── README.md
+│
+├── agents/
+│   ├── destination_agent.py
+│   ├── itinerary_agent.py
+│   ├── budget_booking_agent.py
+│   └── travel_assistance_agent.py
+│
+├── memory/
+│   ├── conversation_memory.py
+│   └── state.py
+│
+├── tools/
+│   ├── destination_search.py
+│   ├── budget_calculator.py
+│   ├── visa_lookup.py
+│   ├── weather_service.py
+│   └── currency_converter.py
+│
+├── prompts/
+├── data/
+├── tests/
+└── utils/
+
+17. Implementation Roadmap
+Phase 1 – System Design
+--- PAGE 8 ---
+Identify user journeys, define travel workflows, and design the Supervisor-based multi-agent architecture.
+Phase 2 – AI Agent Development
+Develop the Destination, Itinerary, Budget & Booking, and Travel Assistance agents independently.
+Phase 3 – LangGraph Integration
+Integrate all agents through LangGraph with shared state and routing logic.
+Phase 4 – Memory & Reflection
+Implement conversation memory and validate recommendations using a Reflection Node.
+Phase 5 – Streamlit Application
+Develop an intuitive interface for travel planning and itinerary generation.
+Phase 6 – Testing & Deployment
+Validate common travel scenarios, document the project, and prepare the final demonstration.
+18. Team Responsibilities
+Team Member Primary Responsibility
+Member 1 Streamlit UI, Prompt Engineering, User Experience
+Member 2 Travel Tools, Budget Calculator, Destination Data
+Member 3 LangGraph Workflow, Memory, Agent Routing
+Member 4 Reflection, Testing, Documentation, System
+Integration
+19. Development Best Practices
+• Use modular and reusable Python components.
+• Secure API keys with environment variables.
+• Implement robust logging and exception handling.
+• Design each AI agent with a single responsibility.
+• Use mock APIs or datasets where live travel APIs are unavailable.
+• Document prompts and workflow decisions.
+• Write unit tests for tools and workflow logic.
+20. Expected Learning Outcomes
+• Build enterprise travel assistants using Agentic AI.
+• Develop Supervisor-based LangGraph workflows.
+• Coordinate multiple AI agents for end-to-end trip planning.
+• Implement memory and reflection for personalized travel experiences.
+• Deploy production-ready Streamlit applications.
+
+
+
+
+--- PAGE 9 ---
+
+Project Deliverables, Evaluation & Client Acceptance
+21. Expected Deliverables
+• Working Streamlit application demonstrating the complete travel planning workflow.
+• Well-structured Python source code with modular architecture.
+• LangGraph workflow featuring a Supervisor Agent and four specialized AI agents.
+• Architecture diagram illustrating agent collaboration, memory, and reflection.
+• Technical documentation and README with setup instructions.
+• Project presentation (10–15 minutes) explaining business and technical implementation.
+• GitHub repository with clean version history.
+• Sample travel datasets and demonstration scenarios.
+22. Evaluation Criteria (100 Marks)
+Assessment Criteria Marks
+Problem Understanding & Solution Design 10
+Prompt Engineering 10
+LangChain & Tool Integration 10
+LangGraph Workflow 15
+Multi-Agent Collaboration 15
+Memory & Reflection 10
+Streamlit User Interface 10
+Code Quality & Documentation 10
+Testing & Demonstration 5
+Innovation & Bonus Features 5
+Total 100
+23. Bonus Enterprise Challenges (Optional)
+• Generate downloadable travel itinerary PDFs.
+• Voice-enabled travel planning assistant.
+• Currency conversion dashboard with budget comparison.
+• Interactive travel maps and route visualization.
+• Multilingual travel assistant.
+• Long-term traveler preference memory using a vector database.
+• Travel recommendation dashboard with analytics.
+24. Submission Checklist
+☐ Working Streamlit application
+☐ Source code repository
+☐ requirements.txt
+--- PAGE 10 ---
+☐ README with setup instructions
+☐ Architecture diagram
+☐ Four AI agents implemented
+☐ Memory and Reflection demonstrated
+☐ Presentation slides
+25. Client Acceptance Criteria
+The project will be accepted if VoyageAI successfully demonstrates a Supervisor-based multi-agent travel
+assistant capable of recommending destinations, generating personalized itineraries, estimating travel budgets,
+and providing travel guidance while maintaining conversation context through memory and validating
+responses using reflection. The solution should be modular, user-friendly, and deployable using Streamlit.
+26. Future Enhancements
+• Real-time flight and hotel booking integration.
+• Live weather and transportation APIs.
+• Travel insurance recommendation module.
+• Collaborative group trip planning.
+• AI-powered travel expense tracking.
+• Mobile application deployment.
+• Integration with loyalty and rewards programs.
+Closing Note
+VoyageAI is designed as an enterprise Agentic AI travel planning platform that combines business problem
+solving with modern AI engineering practices. Students are encouraged to develop modular, explainable, and
+scalable AI solutions while demonstrating effective multi-agent collaboration, memory management, and
+reflection.
