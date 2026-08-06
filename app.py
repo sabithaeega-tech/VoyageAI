@@ -21,10 +21,38 @@ if 'latest_result' not in st.session_state:
 st.markdown(
     """
     <style>
-    .stApp {background: linear-gradient(135deg, #020617 0%, #0f172a 45%, #1d4ed8 100%); color: white;}
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div > select {background: #111827; color: white;}
-    .stButton > button {background: linear-gradient(90deg, #38bdf8, #2563eb); color: white; border: none; border-radius: 999px;}
-    div[data-testid="stSidebar"] {background: #020617;}
+    .stApp {
+        background: var(--background-color);
+        color: var(--text-color);
+    }
+    [data-testid="stSidebar"] {
+        background: var(--secondary-background-color);
+    }
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > select,
+    .stNumberInput > div > div > input,
+    .stMultiSelect > div > div > div {
+        background: var(--background-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+    }
+    .stButton > button {
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+        color: white;
+        border: none;
+        border-radius: 999px;
+    }
+    .stExpander {
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 0.35rem 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+    .stMarkdownContainer, .stTextInput, .stTextArea, .stSelectbox, .stNumberInput, .stMultiSelect {
+        color: var(--text-color);
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -35,7 +63,7 @@ def render_bubble(role: str, text: str) -> None:
     if role == 'user':
         st.markdown(
             f"""
-            <div style="background:#2563eb; color:white; padding:14px 16px; border-radius:18px 18px 4px 18px; margin:8px 0; max-width:80%; margin-left:auto;">
+            <div style="background:linear-gradient(135deg, #2563eb, #38bdf8); color:white; padding:14px 16px; border-radius:18px 18px 4px 18px; margin:8px 0; max-width:80%; margin-left:auto; box-shadow:0 8px 20px rgba(37, 99, 235, 0.16);">
                 {text}
             </div>
             """,
@@ -44,7 +72,7 @@ def render_bubble(role: str, text: str) -> None:
     else:
         st.markdown(
             f"""
-            <div style="background:rgba(255,255,255,0.12); color:white; padding:14px 16px; border-radius:18px 18px 18px 4px; margin:8px 0; max-width:90%;">
+            <div style="background:var(--secondary-background-color); color:var(--text-color); padding:14px 16px; border-radius:18px 18px 18px 4px; margin:8px 0; max-width:90%; border:1px solid var(--border-color); box-shadow:0 4px 12px rgba(15, 23, 42, 0.06);">
                 {text}
             </div>
             """,
@@ -55,10 +83,10 @@ def render_bubble(role: str, text: str) -> None:
 def render_card(title: str, value: str, caption: str) -> None:
     st.markdown(
         f"""
-        <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:14px; margin:6px 0;">
-            <div style="font-size:0.8rem; color:#93c5fd;">{title}</div>
-            <div style="font-size:1.2rem; font-weight:700; margin-top:4px;">{value}</div>
-            <div style="font-size:0.85rem; color:#dbeafe; margin-top:4px;">{caption}</div>
+        <div style="background:var(--secondary-background-color); border:1px solid var(--border-color); border-radius:16px; padding:14px; margin:6px 0; box-shadow:0 8px 24px rgba(15, 23, 42, 0.06);">
+            <div style="font-size:0.8rem; color:#2563eb; font-weight:600;">{title}</div>
+            <div style="font-size:1.2rem; font-weight:700; margin-top:4px; color:var(--text-color);">{value}</div>
+            <div style="font-size:0.85rem; color:var(--text-color); opacity:0.75; margin-top:4px;">{caption}</div>
         </div>
         """,
         unsafe_allow_html=True,
