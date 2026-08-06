@@ -39,6 +39,8 @@ streamlit run app.py
 
 Open the provided local URL (usually http://localhost:8501) and try one of the sample prompts.
 
+Live demo (deployed): https://voyageai-dhjgtz5okqrng6wsfl9sjk.streamlit.app/
+
 ---
 
 ## Repository Layout
