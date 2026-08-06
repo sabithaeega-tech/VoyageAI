@@ -110,4 +110,20 @@ This project is intended for educational and demonstration purposes.
 
 
 ## Screen shots 
+<img width="1913" height="930" alt="Screenshot 2026-08-06 130718" src="https://github.com/user-attachments/assets/7bec57db-64c5-4706-8c2b-335c775a9ae5" />
+
+
+<img width="1899" height="934" alt="Screenshot 2026-08-06 130802" src="https://github.com/user-attachments/assets/f2babb36-9f0d-4b31-bfac-8c8adfe7c8bb" />
+
+
+<img width="1849" height="831" alt="Screenshot 2026-08-06 130827" src="https://github.com/user-attachments/assets/401aaf50-e993-44d8-a5c8-6dd9fcbd0fa3" />
+
+<img width="1900" height="890" alt="Screenshot 2026-08-06 130839" src="https://github.com/user-attachments/assets/7ec24b17-7bb3-4670-a6e6-da522212d636" />
+
+<img width="1901" height="902" alt="Screenshot 2026-08-06 130848" src="https://github.com/user-attachments/assets/7fc82063-389c-4c47-8e35-e865133c1b5a" />
+
+<img width="1896" height="910" alt="Screenshot 2026-08-06 130854" src="https://github.com/user-attachments/assets/2d84d257-8ec0-42ad-8147-36f3e2c53f7a" />
+
+
+
 
