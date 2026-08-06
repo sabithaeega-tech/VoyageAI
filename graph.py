@@ -80,7 +80,7 @@ class TravelPlannerGraph:
     def run_itinerary(self, state: State, runtime: Runtime[Context]) -> State:
         request = state['request_data']
         destination_list = state.get('destination', []) or []
-        primary = destination_list[0] if destination_list else {'name': 'A popular destination', 'tags': []}
+        primary = destination_list[0] if destination_list else {'name': request.get('destination_hint') or 'A custom destination', 'tags': []}
         itinerary = self.itinerary_agent.generate(
             destination=primary,
             duration=request.get('duration', 5),
@@ -92,12 +92,15 @@ class TravelPlannerGraph:
             travelers=request.get('travelers', 1),
             accommodation_style=request.get('accommodation_style', 'moderate'),
             nationality=request.get('nationality', ''),
+            preferred_transportation=request.get('preferred_transportation'),
+            preferred_accommodation=request.get('preferred_accommodation'),
+            travel_season=request.get('travel_season'),
         )
         return {'itinerary': itinerary}
 
     def run_budget(self, state: State, runtime: Runtime[Context]) -> State:
         request = state['request_data']
-        primary = (state.get('destination') or [{'name': 'A popular destination', 'currency': 'USD', 'avg_daily_cost': 150}])[0]
+        primary = (state.get('destination') or [{'name': request.get('destination_hint') or 'A custom destination', 'currency': 'USD', 'avg_daily_cost': 150}])[0]
         budget_data = self.budget_agent.estimate(
             destination=primary,
             duration=request.get('duration', 5),
@@ -106,17 +109,27 @@ class TravelPlannerGraph:
             currency=request.get('currency', 'INR'),
             accommodation_style=request.get('accommodation_style', 'moderate'),
             nationality=request.get('nationality'),
+            preferred_transportation=request.get('preferred_transportation'),
+            preferred_accommodation=request.get('preferred_accommodation'),
+            travel_season=request.get('travel_season'),
+            interests=request.get('interests', []),
         )
         return {'budget': budget_data}
 
     def run_assistance(self, state: State, runtime: Runtime[Context]) -> State:
         request = state['request_data']
         destination_list = state.get('destination', []) or []
-        primary = destination_list[0] if destination_list else {'name': 'A popular destination'}
+        primary = destination_list[0] if destination_list else {'name': request.get('destination_hint') or 'A custom destination'}
         assistance_data = self.assistance_agent.provide(
             destination=primary['name'],
             travel_dates=request.get('travel_dates'),
             nationality=request.get('nationality'),
+            interests=request.get('interests', []),
+            budget=request.get('budget', 0),
+            travelers=request.get('travelers', 1),
+            preferred_transportation=request.get('preferred_transportation'),
+            preferred_accommodation=request.get('preferred_accommodation'),
+            travel_season=request.get('travel_season'),
         )
         return {'travel_assistance': assistance_data}
 
@@ -125,7 +138,7 @@ class TravelPlannerGraph:
         budget = state.get('budget', {})
         itinerary = state.get('itinerary', [])
         destination_list = state.get('destination', []) or []
-        destination = destination_list[0] if destination_list else {'name': 'Unknown destination', 'region': ''}
+        destination = destination_list[0] if destination_list else {'name': request.get('destination_hint') or 'Unknown destination', 'region': ''}
         assistance = state.get('travel_assistance', {})
         memory = runtime.context.get('memory') if runtime.context else None
         memory_notes = memory.get_context() if memory else ''
@@ -140,23 +153,6 @@ class TravelPlannerGraph:
         )
 
         return {'reflection': reflection}
-
-    def _calculate_confidence(self, budget: Dict[str, Any], itinerary: List[Dict[str, str]], request: Dict[str, Any], destination: Dict[str, Any]) -> int:
-        score = 50
-        if budget.get('budget_difference') is not None:
-            if budget['budget_difference'] >= 0:
-                score += 20
-            else:
-                score -= 10
-        if len(itinerary) >= request.get('duration', 1):
-            score += 10
-        if destination.get('region') and request.get('preferred_region') and request['preferred_region'].lower() in destination['region'].lower():
-            score += 5
-        if request.get('travel_dates'):
-            score += 5
-        if request.get('interests'):
-            score += 5
-        return min(max(score, 0), 100)
 
 
 def assistance_data_summary(budget: Dict[str, Any], request: Dict[str, Any]) -> str:

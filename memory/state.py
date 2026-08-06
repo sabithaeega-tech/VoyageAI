@@ -13,3 +13,7 @@ class TravelerState(BaseModel):
     preferred_region: Optional[str] = None
     last_destination: Optional[str] = None
     travel_dates: Optional[str] = None
+    preferred_transportation: Optional[str] = None
+    preferred_accommodation: Optional[str] = None
+    travel_season: Optional[str] = None
+    last_request: Optional[str] = None

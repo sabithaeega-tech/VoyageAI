@@ -2,8 +2,15 @@ import json
 import os
 from typing import Any, Callable, Dict, List, Optional
 
-import ollama
-from langchain_ollama import OllamaLLM
+try:
+    import ollama
+except ImportError:  # pragma: no cover - optional dependency
+    ollama = None
+
+try:
+    from langchain_ollama import OllamaLLM
+except ImportError:  # pragma: no cover - optional dependency
+    OllamaLLM = None
 
 from tools.budget_calculator import estimate_trip_budget
 from tools.currency_converter import convert
@@ -21,15 +28,27 @@ class OllamaProvider:
             'OLLAMA_SYSTEM_PROMPT',
             'You are VoyageAI, a multi-agent travel planning supervisor. Use the available tools to generate accurate travel planning summaries and assistance.',
         )
-        self.client = ollama.Client(host=self.host)
-        self.llm = OllamaLLM(
-            model=self.model,
-            base_url=self.host,
-            temperature=self.temperature,
-            system=self.system_prompt,
-        )
+        self.client = None
+        self.llm = None
+        if ollama is not None:
+            try:
+                self.client = ollama.Client(host=self.host)
+            except Exception:
+                self.client = None
+        if OllamaLLM is not None:
+            try:
+                self.llm = OllamaLLM(
+                    model=self.model,
+                    base_url=self.host,
+                    temperature=self.temperature,
+                    system=self.system_prompt,
+                )
+            except Exception:
+                self.llm = None
 
     def generate(self, prompt: str) -> str:
+        if self.client is None:
+            return self._fallback_response(prompt)
         try:
             messages = [
                 {'role': 'system', 'content': self.system_prompt},
@@ -41,10 +60,12 @@ class OllamaProvider:
                 stream=False,
             )
             return self._parse_chat_response(response).strip()
-        except Exception as exc:
-            return f'Travel summary generation fallback: {exc}'
+        except Exception:
+            return self._fallback_response(prompt)
 
     def generate_with_tools(self, prompt: str, tools: Optional[List[Callable]] = None) -> str:
+        if self.client is None:
+            return self._fallback_response(prompt)
         messages = [
             {'role': 'system', 'content': self.system_prompt},
             {'role': 'user', 'content': prompt},
@@ -58,13 +79,10 @@ class OllamaProvider:
                 stream=False,
             )
             content = self._parse_chat_response(response).strip()
-            # If the assistant invoked tools, run them locally and provide the results as tool messages,
-            # then send a follow-up to let the assistant incorporate tool outputs.
             tool_calls = getattr(response.message, 'tool_calls', None)
             if content:
                 return content
             if tool_calls:
-                # Append assistant placeholder and then tool outputs
                 messages.append({'role': 'assistant', 'content': ''})
                 tool_map = {
                     'tool_search_destinations': self.tool_search_destinations,
@@ -79,8 +97,8 @@ class OllamaProvider:
                     if name in tool_map:
                         try:
                             result = tool_map[name](**args)
-                        except Exception as e:
-                            result = {'error': str(e)}
+                        except Exception as exc:
+                            result = {'error': str(exc)}
                         messages.append(
                             {
                                 'role': 'tool',
@@ -114,6 +132,11 @@ class OllamaProvider:
             return str(response.content)
         return ''
 
+    def _fallback_response(self, prompt: str) -> str:
+        if 'itinerary' in prompt.lower():
+            return 'Travel planning details are being generated locally with a structured fallback prompt.'
+        return 'Travel planning guidance generated locally because the LLM backend is unavailable.'
+
     def tool_search_destinations(
         self,
         interests: str,
@@ -121,17 +144,6 @@ class OllamaProvider:
         duration: int,
         region: str,
     ) -> List[Dict[str, Any]]:
-        """Search travel destinations matching the user's interests and budget.
-
-        Args:
-            interests: Comma-separated interest keywords.
-            budget: User budget for the trip.
-            duration: Trip duration in days.
-            region: Preferred travel region.
-
-        Returns:
-            A list of matching destination records.
-        """
         interest_list = [item.strip() for item in interests.split(',') if item.strip()]
         return search_destinations(interest_list, budget, duration, region)
 
@@ -142,7 +154,6 @@ class OllamaProvider:
         travelers: int,
         accommodation_style: str,
     ) -> Dict[str, Any]:
-        """Estimate travel budget for a selected destination."""
         available = search_destinations([], 0, duration, '')
         match = next((item for item in available if item['name'].lower() == destination.lower()), None)
         if not match:
@@ -155,9 +166,7 @@ class OllamaProvider:
         return budget_data
 
     def tool_lookup_visa(self, destination: str, nationality: str) -> Dict[str, str]:
-        """Return visa guidance for a destination and nationality."""
         return lookup_visa_info(destination, nationality)
 
     def tool_get_weather(self, destination: str, travel_date: str) -> Dict[str, str]:
-        """Return weather guidance for the destination and travel date."""
         return get_weather_forecast(destination, travel_date)
