@@ -1,15 +1,69 @@
+import json
 from typing import Dict, Optional
 from tools.visa_lookup import lookup_visa_info
 from tools.weather_service import get_weather_forecast
+from providers.ollama_provider import OllamaProvider
 
 
 class TravelAssistanceAgent:
+    def __init__(self) -> None:
+        self.provider = OllamaProvider()
+
     def provide(
         self,
         destination: str,
         travel_dates: Optional[str],
         nationality: Optional[str],
     ) -> Dict[str, str]:
+        # Build LLM prompt to generate rich assistance information
+        prompt = (
+            "You are VoyageAI's Travel Assistance Agent. Provide a complete travel assistance and guidance package for the traveler's destination.\n"
+            "Here are the traveler's details:\n"
+            f" - Destination: {destination}\n"
+            f" - Travel Dates: {travel_dates or 'Flexible'}\n"
+            f" - Nationality: {nationality or 'Unknown'}\n\n"
+            "Return only valid JSON as a single object with the following keys. Do not include any explanations or conversational text outside the JSON:\n"
+            " - 'visa_guidance': string (personalized visa requirements based on nationality and destination)\n"
+            " - 'visa_notes': string (important notes, documents required, and processing times)\n"
+            " - 'weather_forecast': string (expected weather conditions for the destination during the travel dates or month)\n"
+            " - 'emergency_numbers': string (local emergency services numbers, e.g. 'Police: 110, Ambulance: 119')\n"
+            " - 'currency': string (the local currency name and code, e.g. 'Euro (EUR)')\n"
+            " - 'language': string (official languages and some helpful local words/phrases)\n"
+            " - 'time_zone': string (time zone name and UTC offset, e.g. 'UTC +1')\n"
+            " - 'power_plug': string (plug type and voltage, e.g. 'Type C / E, 230V')\n"
+            " - 'local_transport': string (best ways to get around locally, e.g. public transit, ride-hailing)\n"
+            " - 'safety_tips': string (vital safety and local etiquette advice for tourists)\n"
+            " - 'packing_tips': string (recommended items to pack based on the weather and culture)\n"
+        )
+
+        try:
+            response = self.provider.generate(prompt)
+            content = self._extract_json_object(response)
+            if content:
+                res = json.loads(content)
+                if isinstance(res, dict) and 'visa_guidance' in res:
+                    return {
+                        'destination': destination,
+                        'travel_dates': travel_dates or 'Flexible',
+                        'nationality': nationality or 'Not specified',
+                        'visa_guidance': str(res.get('visa_guidance', '')),
+                        'visa_notes': str(res.get('visa_notes', '')),
+                        'weather_forecast': str(res.get('weather_forecast', '')),
+                        'weather_month': travel_dates or 'unknown',
+                        'packing_tips': str(res.get('packing_tips', '')),
+                        'emergency_numbers': str(res.get('emergency_numbers', '')),
+                        'currency': str(res.get('currency', '')),
+                        'language': str(res.get('language', '')),
+                        'time_zone': str(res.get('time_zone', '')),
+                        'power_plug': str(res.get('power_plug', '')),
+                        'local_transport': str(res.get('local_transport', '')),
+                        'safety_tips': str(res.get('safety_tips', '')),
+                    }
+        except Exception:
+            # Fall back to rule-based system if LLM or parsing fails
+            pass
+
+        # Rule-based fallback system
         normalized_destination = self._normalize_destination(destination)
         visa = lookup_visa_info(normalized_destination, nationality)
         weather = get_weather_forecast(normalized_destination, travel_dates)
@@ -31,6 +85,25 @@ class TravelAssistanceAgent:
             'local_transport': self._local_transport(normalized_destination),
             'safety_tips': self._safety_tips(normalized_destination),
         }
+
+    def _extract_json_object(self, text: str) -> str:
+        text = text.strip()
+        start = text.find('{')
+        if start == -1:
+            return ''
+
+        depth = 0
+        for index, char in enumerate(text[start:], start=start):
+            if char == '{':
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1]
+
+        if text.startswith('{') and text.endswith('}'):
+            return text
+        return ''
 
     def _build_packing_tips(self, forecast: str) -> str:
         tips = ['Pack comfortable walking shoes.', 'Carry a reusable water bottle.']

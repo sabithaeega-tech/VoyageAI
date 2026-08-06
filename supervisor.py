@@ -1,5 +1,6 @@
 import warnings
 import re
+import json
 from typing import Any, Dict, List, Optional
 
 try:
@@ -11,12 +12,14 @@ except ImportError:
 from graph import TravelPlannerGraph
 from memory.conversation_memory import ConversationMemory
 from tools.destination_search import DESTINATIONS
+from providers.ollama_provider import OllamaProvider
 
 
 class SupervisorAgent:
     def __init__(self) -> None:
         self.memory = ConversationMemory()
         self.workflow = TravelPlannerGraph()
+        self.provider = OllamaProvider()
 
     def handle_request(self, user_input: str, user_profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         self.memory.add_user_message(user_input)
@@ -39,6 +42,50 @@ class SupervisorAgent:
         return result
 
     def parse_user_request(self, user_input: str, user_profile: Dict[str, Any]) -> Dict[str, Any]:
+        # Build LLM prompt to parse query
+        prompt = (
+            "You are VoyageAI's Supervisor parsing assistant. Parse the traveler's request and profile into structured data.\n"
+            f"Traveler's Input: \"{user_input}\"\n"
+            f"Traveler's Profile: {user_profile}\n\n"
+            "Extract the following fields and return only valid JSON as a single object. Do not include any explanations or conversational text outside the JSON:\n"
+            " - 'duration': integer (the trip duration in days, default to profile's duration, or 5)\n"
+            " - 'budget': number (the total trip budget, default to profile's budget, or 150000.0)\n"
+            " - 'travelers': integer (number of travelers, default to profile's travelers, or 1)\n"
+            " - 'travel_dates': string (dates in YYYY-MM-DD format if mentioned, or null)\n"
+            " - 'travel_month': string (the month of travel, e.g., 'November', if mentioned or derived from dates, or null)\n"
+            " - 'nationality': string (the nationality from profile or input)\n"
+            " - 'currency': string (the currency from profile, e.g. 'INR', or JPY/USD, or 'INR')\n"
+            " - 'interests': list of strings (extract travel interests/styles, e.g. ['culture', 'beach', 'food'])\n"
+            " - 'preferred_region': string (the region like 'Asia', 'Europe', or null)\n"
+            " - 'accommodation_style': string (must be either 'budget', 'moderate', or 'premium')\n"
+            " - 'destination_hint': string (the destination city/country mentioned, e.g., 'Tokyo, Japan' or 'Paris', or null)\n"
+        )
+
+        try:
+            response = self.provider.generate(prompt)
+            content = self._extract_json_object(response)
+            if content:
+                res = json.loads(content)
+                if isinstance(res, dict):
+                    return {
+                        'request': user_input,
+                        'duration': int(res.get('duration') or user_profile.get('duration') or 5),
+                        'budget': float(res.get('budget') or user_profile.get('budget') or 150000.0),
+                        'travelers': int(res.get('travelers') or user_profile.get('travelers') or 1),
+                        'travel_dates': res.get('travel_dates') or user_profile.get('travel_dates'),
+                        'travel_month': res.get('travel_month') or self._month_from_date(res.get('travel_dates')),
+                        'nationality': res.get('nationality') or user_profile.get('nationality'),
+                        'currency': res.get('currency') or user_profile.get('currency') or 'INR',
+                        'interests': list(res.get('interests') or user_profile.get('interests') or []),
+                        'preferred_region': res.get('preferred_region') or user_profile.get('preferred_region'),
+                        'accommodation_style': res.get('accommodation_style') or self.extract_accommodation_style(user_input),
+                        'destination_hint': res.get('destination_hint') or user_profile.get('destination_hint'),
+                    }
+        except Exception:
+            # Fall back to regex parser if LLM fails
+            pass
+
+        # Regex fallback parser
         duration = self.extract_int(user_input, r"(\d+)\s*-?\s*day") or user_profile.get('duration') or 5
         budget = self.extract_budget(user_input) or user_profile.get('budget') or 0
         travelers = self.extract_int(user_input, r"(\d+)\s*(traveler|travellers|people|guests)") or user_profile.get('travelers') or 1
@@ -65,6 +112,25 @@ class SupervisorAgent:
             'destination_hint': destination_hint,
         }
 
+    def _extract_json_object(self, text: str) -> str:
+        text = text.strip()
+        start = text.find('{')
+        if start == -1:
+            return ''
+
+        depth = 0
+        for index, char in enumerate(text[start:], start=start):
+            if char == '{':
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1]
+
+        if text.startswith('{') and text.endswith('}'):
+            return text
+        return ''
+
     def extract_budget(self, text: str) -> Optional[float]:
         # Prefer explicit budget mentions like "budget 200000" or "budget: 200000 INR".
         match = re.search(r"budget[^0-9\n\r\$€₹]*([0-9,]+(?:\.\d+)?)", text, re.IGNORECASE)
@@ -74,7 +140,6 @@ class SupervisorAgent:
                 return float(cleaned)
             except ValueError:
                 return None
-        # Fall back to any standalone number only if nothing else provided is a better source.
         return None
 
     def extract_int(self, text: str, pattern: str) -> Optional[int]:
