@@ -81,6 +81,29 @@ class ItineraryPlannerAgentTests(unittest.TestCase):
         self.assertIsInstance(itinerary[0]['stay'], str)
         self.assertIn('Ubud Monkey Forest', itinerary[0]['stay'])
 
+    def test_fallback_itinerary_uses_destination_specific_places_for_kashmir(self):
+        agent = ItineraryPlannerAgent()
+        destination = {
+            'name': 'Kashmir',
+            'tags': ['food', 'nature', 'culture'],
+            'attractions': [],
+        }
+
+        itinerary = agent._build_fallback_itinerary(
+            destination=destination,
+            duration=2,
+            interests=['food', 'nature'],
+            travel_month='summer',
+            accommodation_style='budget',
+            budget=50000,
+            start_day=1,
+        )
+
+        self.assertEqual(len(itinerary), 2)
+        self.assertTrue(any('Dal Lake' in place for place in itinerary[0]['places_to_visit']))
+        self.assertTrue(any('Gulmarg' in place for place in itinerary[0]['places_to_visit']))
+        self.assertIn('Dal Lake', itinerary[0]['stay'])
+
 
 if __name__ == '__main__':
     unittest.main()

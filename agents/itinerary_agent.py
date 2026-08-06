@@ -242,13 +242,16 @@ class ItineraryPlannerAgent:
         destination_name = destination.get('name', 'your destination')
         tags = [tag.lower() for tag in destination.get('tags', [])]
         attractions = [str(item) for item in destination.get('attractions', []) if item]
+        suggested_places = self._suggest_places_for_destination(destination_name, interests, travel_month or travel_season, attractions)
         itinerary: List[Dict[str, Any]] = []
         for day_index in range(duration):
             day_number = start_day + day_index
-            morning = self._build_morning_plan(destination_name, interests, travel_month, travel_season, day_number)
-            afternoon = self._build_afternoon_plan(destination_name, interests, attractions, day_number)
-            evening = self._build_evening_plan(destination_name, interests, travel_month, travel_season)
+            morning = self._build_morning_plan(destination_name, interests, travel_month, travel_season, day_number, suggested_places)
+            afternoon = self._build_afternoon_plan(destination_name, interests, attractions, suggested_places, day_number)
+            evening = self._build_evening_plan(destination_name, interests, travel_month, travel_season, suggested_places)
             places = self._extract_places_from_highlights([morning, afternoon, evening], destination)
+            if suggested_places and (destination_name.lower() in {'kashmir', 'bali'} or len(places) < 2):
+                places = suggested_places[:4]
             if not places:
                 places = [destination_name]
             itinerary.append({
@@ -258,26 +261,49 @@ class ItineraryPlannerAgent:
                 'afternoon': afternoon,
                 'evening': evening,
                 'places_to_visit': places[:4],
-                'stay': self._suggest_stay(destination, accommodation_style),
+                'stay': self._suggest_stay_for_day(destination, accommodation_style, places),
             })
         return itinerary
 
-    def _build_morning_plan(self, destination_name: str, interests: List[str], travel_month: Optional[str], travel_season: Optional[str], day_number: int) -> str:
+    def _build_morning_plan(self, destination_name: str, interests: List[str], travel_month: Optional[str], travel_season: Optional[str], day_number: int, suggested_places: List[str]) -> str:
         interest_text = ', '.join(interests) if interests else 'local highlights'
         season_text = travel_season or travel_month or 'the season'
-        return f"Day {day_number} morning: start with a local breakfast and visit a top-rated attraction in {destination_name} that fits your {interest_text} interests, with a weather-friendly plan for {season_text}."
+        primary_place = suggested_places[0] if suggested_places else destination_name
+        return f"Day {day_number} morning: start with a local breakfast and visit {primary_place} in {destination_name}, a great fit for your {interest_text} interests, with a weather-friendly plan for {season_text}."
 
-    def _build_afternoon_plan(self, destination_name: str, interests: List[str], attractions: List[str], day_number: int) -> str:
+    def _build_afternoon_plan(self, destination_name: str, interests: List[str], attractions: List[str], suggested_places: List[str], day_number: int) -> str:
         if attractions:
             attraction = attractions[(day_number - 1) % len(attractions)] if attractions else destination_name
             return f"Day {day_number} afternoon: continue with {attraction} and explore nearby food, shopping, or cultural spots suited to your interests."
+        if suggested_places:
+            second_place = suggested_places[1] if len(suggested_places) > 1 else suggested_places[0]
+            return f"Day {day_number} afternoon: explore {second_place} and nearby local experiences around {destination_name}."
         return f"Day {day_number} afternoon: explore hidden gems, local markets, or scenic viewpoints around {destination_name}."
 
-    def _build_evening_plan(self, destination_name: str, interests: List[str], travel_month: Optional[str], travel_season: Optional[str]) -> str:
+    def _build_evening_plan(self, destination_name: str, interests: List[str], travel_month: Optional[str], travel_season: Optional[str], suggested_places: List[str]) -> str:
         season_text = travel_season or travel_month or 'the season'
         if 'food' in interests or 'nightlife' in interests:
-            return f"Evening: enjoy a curated dinner experience and a relaxed night walk while keeping the plan adaptable for {season_text}."
-        return f"Evening: unwind with a local cultural activity, cafe stop, or scenic view around {destination_name} based on the weather."
+            dinner_place = suggested_places[2] if len(suggested_places) > 2 else suggested_places[0]
+            return f"Evening: enjoy a curated dinner experience near {dinner_place} and a relaxed night walk while keeping the plan adaptable for {season_text}."
+        return f"Evening: unwind with a local cultural activity or scenic view around {destination_name} based on the weather."
+
+    def _suggest_places_for_destination(self, destination_name: str, interests: List[str], travel_month: Optional[str], attractions: List[str]) -> List[str]:
+        destination_name_lower = destination_name.lower()
+        if 'kashmir' in destination_name_lower:
+            base_places = ['Dal Lake', 'Gulmarg', 'Pahalgam', 'Sonmarg', 'Shankaracharya Temple', 'Betaab Valley']
+            if 'food' in interests:
+                base_places.insert(1, 'Traditional Kashmiri Restaurant')
+            if 'nature' in interests:
+                base_places.insert(2, 'Ningle Lake')
+            return base_places
+        if 'bali' in destination_name_lower:
+            return ['Ubud Monkey Forest', 'Ubud Art Market', 'Campuhan Ridge Walk', 'Kuta Beach']
+        if attractions:
+            return attractions[:4]
+        return [destination_name]
+
+    def _suggest_stay_for_day(self, destination: Dict[str, Any], accommodation_style: str, places_to_visit: List[str]) -> str:
+        return self._build_day_stay_text(destination, accommodation_style, places_to_visit)
 
     def _extract_places_from_text(self, text: str, destination: Dict[str, Any]) -> List[str]:
         if not text:
