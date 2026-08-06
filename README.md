@@ -1,112 +1,122 @@
 # VoyageAI
 
-VoyageAI is an intelligent, multi-agent travel planning application built with Python, Streamlit, LangGraph, and Ollama. It helps users create personalized travel plans for any destination mentioned in the prompt, including itinerary generation, budget estimation, travel assistance, and reflection-based validation.
+VoyageAI is an intelligent, multi-agent travel-planning assistant built with Python and Streamlit. It combines lightweight local tools and an LLM provider (Ollama by default) to generate personalized itineraries, estimate budgets, and provide travel assistance (visa, weather, packing, transport) from a single conversational prompt.
 
-## Project Overview
+This README explains how the project is organized, how the main components work together, and how to run and extend the system locally.
 
-VoyageAI combines multiple specialized agents to act like a travel concierge:
-- Destination agent: identifies or builds a destination recommendation from the user prompt
-- Itinerary agent: creates a day-by-day travel plan with morning, afternoon, evening, places to visit, and stay suggestions
-- Budget agent: estimates travel costs for flights, accommodation, food, transport, activities, shopping, and contingency
-- Travel assistance agent: provides visa guidance, weather notes, packing tips, local transport advice, and travel support information
-- Reflection agent: evaluates whether the plan is complete, personalized, and budget-aware
+**Highlights:**
+- Natural-language prompts produce a day-by-day itinerary, places-to-visit, and stay recommendations.
+- Multi-agent architecture (destination, itinerary, budget, travel assistance, reflection) for modular and extensible planning.
+- Local fallbacks and helper tools allow the app to function even if the LLM backend is unavailable.
 
-The app is designed to work with user-provided destinations dynamically rather than being limited to a small predefined list.
+---
 
-## Reference Inspiration
+## Quick Start
 
-The UI and conversational experience were inspired by the travel-planning style seen in:
-- https://mindtrip.ai/chat/8831940
+- Create and activate a Python virtual environment (recommended):
 
-## Project Structure
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+```
 
-- app.py: Streamlit web app entry point and user interface
-- supervisor.py: parses the user request and coordinates the workflow
-- graph.py: LangGraph workflow that connects the agents in sequence
-- agents/: contains the specialized planning agents
-  - destination_agent.py
-  - itinerary_agent.py
-  - budget_booking_agent.py
-  - travel_assistance_agent.py
-  - reflection_agent.py
-- memory/: stores traveler state and conversation memory
-- providers/: LLM provider integration, including Ollama support
-- tools/: helper modules for destination search, visa lookup, currency conversion, budgeting, and weather
-- tests/: regression tests for itinerary logic
-
-## Features
-
-- Dynamic destination planning from natural-language prompts
-- Personalized itinerary generation for any destination mentioned by the user
-- Budget-aware planning with suggested hotel, transport, activity, and food recommendations
-- Travel support such as visa guidance, weather outlook, packing checklist, and local transport advice
-- Traveler profile support including nationality, currency, travelers, duration, budget, season, transportation preference, accommodation preference, and interests
-- Conversation memory for continuity across follow-up travel requests
-- Modern Streamlit UI with chat-style presentation and trip overview cards
-
-## Tech Stack
-
-- Python 3.10+
-- Streamlit
-- LangGraph
-- Ollama / LangChain-compatible provider support
-- Pydantic
-- pytest
-
-## Installation
-
-1. Clone the repository
-2. Create a virtual environment (recommended)
-3. Install dependencies:
+- Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. If you are using Ollama locally, make sure the Ollama server is running and the model is available.
+- (Optional) Start Ollama if you plan to use the LLM provider locally and configure the `OLLAMA_HOST` / `OLLAMA_MODEL` env vars.
 
-## Run the Application
+- Run the Streamlit app:
 
 ```bash
 streamlit run app.py
 ```
 
-Once running, open the local Streamlit URL in your browser:
-- http://localhost:8501
+Open the provided local URL (usually http://localhost:8501) and try one of the sample prompts.
 
-If you want to run it from the project folder directly, use:
-- Project folder: C:\Users\dusnamoni.nandini\Desktop\CapStone\VoyageAI1.0
+---
 
-## Example Prompts
+## Repository Layout
 
-- Plan a 5-day trip to Kashmir under ₹50,000 for a couple with food and nature interests.
-- Plan a 7-day honeymoon in Bali with a budget of ₹2,00,000.
-- Suggest a solo backpacking trip to Vietnam under ₹80,000.
-- Plan a 10-day Europe trip for a family of four in summer with culture and beach stops.
+- `app.py` — Streamlit frontend. Handles UI, user profile inputs, sample prompts, and displays the generated itinerary, budget, and travel support sections.
+- `supervisor.py` — Top-level coordinator: parses user prompt, extracts structured request fields, updates conversation memory, and runs the workflow graph.
+- `graph.py` — Workflow orchestration (LangGraph) wiring the agents and data flow for a complete travel plan.
+- `agents/` — Specialized agents that perform discrete tasks:
+  - `destination_agent.py` — Chooses or builds a destination record and metadata.
+  - `itinerary_agent.py` — Generates day-by-day itinerary JSON (via LLM or local fallback) and extracts place names & stay suggestions.
+  - `budget_booking_agent.py` — Estimates and breaks down trip costs.
+  - `travel_assistance_agent.py` — Gathers visa, weather, packing, and local transport information.
+  - `reflection_agent.py` — Validates plan completeness and generates a confidence score/summary.
+- `providers/` — LLM provider adapters (Ollama integration) and safe fallbacks.
+- `tools/` — Small, testable utility modules (destination search DB, visa lookup, currency conversion, budget estimator, weather stub).
+- `memory/` — Conversation and traveler state persistence (in-memory/session-state by default).
+- `tests/` — Unit tests (pytest) for core logic such as itinerary parsing and budgeting.
 
-## Testing
+---
 
-Run the test suite with:
+## How It Works (high level)
+
+1. User enters a natural-language prompt and sets a traveler profile in the Streamlit UI.
+2. `supervisor.py` parses structured fields (duration, budget, interests, destination hint) and updates `ConversationMemory`.
+3. The `TravelPlannerGraph` executes the agents in order, passing structured data between them.
+4. The `ItineraryAgent` attempts to call the LLM (via `providers/ollama_provider.py`) with a structured prompt that requests JSON. If the provider is unavailable, a local fallback generates a structured but simpler itinerary.
+5. The results (itinerary, budget breakdown, travel assistance, reflection summary) are returned to the UI and stored in memory for follow-ups.
+
+Key design goals: modular agents, clear JSON contract for itinerary output, graceful fallbacks, and an easy-to-extend local tools layer.
+
+---
+
+## Important Files & Where to Look
+
+- `agents/itinerary_agent.py` — logic for building prompts, parsing LLM JSON responses, extracting place names and stay suggestions. If you see generic phrases like "visit a top-rated attraction", it likely means the destination record had no `attractions` populated.
+- `tools/destination_search.py` — small local DB used for quick destination matching. Add entries here to improve local recommendations (for example add "Kashmir" with known attractions and hotels).
+- `providers/ollama_provider.py` — LLM integration and local tool-call adapters. Configure `OLLAMA_HOST`, `OLLAMA_MODEL`, and `OLLAMA_TEMPERATURE` via environment variables.
+- `supervisor.py` — parsing helpers are here (destination, budget, dates, interests). Tweak extraction regexes to improve detection from prompts.
+
+---
+
+## Extending Destinations (practical)
+
+To include a new destination (for example, Kashmir) with named attractions and better stay suggestions:
+
+1. Edit `tools/destination_search.py` and add an entry to the `DESTINATIONS` list. Include: `name`, `region`, `tags`, `avg_daily_cost`, `visa_required`, `currency`, and an `attractions` list.
+2. The `DestinationRecommendationAgent` will attempt to match hint text to records in `DESTINATIONS` and return the enriched record to the itinerary agent.
+
+This quick data-driven approach provides immediate improvements without calling external APIs.
+
+---
+
+## Running Tests
+
+Run unit tests with `pytest`:
 
 ```bash
 python -m pytest -q
 ```
 
-## Notes
+Tests focus on itinerary parsing, tools behavior, and basic provider fallbacks.
 
-- The app can work even when the LLM backend is unavailable by falling back to structured local responses.
-- The system is built to be extensible, so new agents or tools can be added without changing the overall structure.
+---
 
-## Future Improvements
+## Development Notes
 
-- Add richer destination-specific recommendations using live travel APIs
-- Improve itinerary personalization with more advanced memory and preference learning
-- Add export to PDF/Word and calendar integration
-- Enhance interactive chat follow-up refinement
+- The app stores short-term conversation state in `memory/conversation_memory.py` and in `st.session_state` during UI sessions.
+- If you change prompt templates in `agents/itinerary_agent.py`, update parsing logic in the same file — the code expects the LLM to return a JSON array describing each day.
+- To test LLM-driven behavior without a local Ollama server, either install Ollama or mock `providers.OllamaProvider.generate` in tests.
 
-## License
+---
 
-This project is intended for educational and demonstration purposes.
+## Contribution & License
+
+- Contributions welcome: open an issue or a PR for bug fixes, destination additions, or new agents.
+- This repository is intended for educational and demonstration purposes. If you plan to use it in production, please add an appropriate open-source license and review third-party models and data sources.
+
+---
 
 
 ## Screen shots 

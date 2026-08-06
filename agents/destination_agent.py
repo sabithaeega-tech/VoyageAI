@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+from tools.destination_search import search_destinations
 
 
 class DestinationRecommendationAgent:
@@ -13,6 +14,15 @@ class DestinationRecommendationAgent:
         interests = [interest.strip().lower() for interest in interests if interest]
         if destination_hint:
             destination_hint = destination_hint.strip()
+            # Attempt to enrich the hinted destination using the local search database
+            try:
+                matches = search_destinations(interests, budget, duration, preferred_region or '')
+                # look for a close name match
+                for m in matches:
+                    if destination_hint.lower() in m.get('name', '').lower() or m.get('name', '').lower() in destination_hint.lower():
+                        return [m]
+            except Exception:
+                pass
             return [self._build_custom_destination(destination_hint, interests, budget, duration)]
 
         return [self._build_custom_destination('A destination based on your prompt', interests, budget, duration)]
